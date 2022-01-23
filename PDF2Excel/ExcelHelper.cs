@@ -51,7 +51,8 @@ namespace PDF2Excel
                     if (!string.IsNullOrEmpty(table.Header)) count++;
                     count += table.Rows.Count;
                 }
-
+                bool isSpaceCell=false;
+                bool endSetColWidth = false;
                 foreach (var table in tables)
                 {
                     float pageWitdh = table.GetTableSize().GetWidth();
@@ -72,13 +73,22 @@ namespace PDF2Excel
                     {
                         IRow row = sheet.CreateRow(startIndex);
                         startIndex++;
+                        isSpaceCell = false;
                         for (int j = 0; j < table.Rows[i].Cells.Count; ++j)
                         {
                            
                             var cell = table.Rows[i].Cells[j];
-                            if (i == 0)
+                            if (!endSetColWidth)
                             {
-                                sheet.SetColumnWidth(j , (int)(cell.Rectangle.GetWidth()*120* 256/pageWitdh));
+                                if (cell.ColSpan == 0)
+                                {
+                                    sheet.SetColumnWidth(j, (int)(cell.Rectangle.GetWidth() * 120 * 256 / pageWitdh));
+                                }
+                                else
+                                {
+                                    isSpaceCell = true;
+                                }
+                                
                             }
                             if (!cell.IsHMerge && !cell.IsVMerge)
                             {
@@ -92,6 +102,10 @@ namespace PDF2Excel
                                 excelCell.CellStyle = notesStyle;
                             }
 
+                        }
+                        if (!isSpaceCell)
+                        {
+                            endSetColWidth = true;
                         }
                     }
                     int start = startIndex - table.Rows.Count+1;
